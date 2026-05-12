@@ -4,6 +4,9 @@ export type ThinkingCatalogEntry = {
   provider: string;
   id: string;
   reasoning?: boolean;
+  compat?: {
+    supportedReasoningEfforts?: unknown[];
+  };
 };
 
 const BASE_THINKING_LEVELS = ["off", "minimal", "low", "medium", "high"] as const;
@@ -75,8 +78,45 @@ export function listThinkingLevelLabels(
   return BASE_THINKING_LEVELS;
 }
 
-export function formatThinkingLevels(provider?: string | null, model?: string | null): string {
-  return listThinkingLevelLabels(provider, model).join(", ");
+function catalogSupportsXHigh(
+  provider?: string | null,
+  model?: string | null,
+  catalog?: ThinkingCatalogEntry[],
+): boolean {
+  const normalizedProvider = normalizeThinkingProviderId(provider);
+  const modelId = model?.trim() ?? "";
+  if (!normalizedProvider || !modelId) {
+    return false;
+  }
+  const candidate = catalog?.find(
+    (entry) =>
+      normalizeThinkingProviderId(entry.provider) === normalizedProvider && entry.id === modelId,
+  );
+  const efforts = candidate?.compat?.supportedReasoningEfforts;
+  return (
+    Array.isArray(efforts) &&
+    efforts.some((effort) => normalizeThinkLevel(String(effort)) === "xhigh")
+  );
+}
+
+export function listThinkingLevels(
+  provider?: string | null,
+  model?: string | null,
+  catalog?: ThinkingCatalogEntry[],
+): string[] {
+  const levels: string[] = [...BASE_THINKING_LEVELS];
+  if (catalogSupportsXHigh(provider, model, catalog)) {
+    levels.push("xhigh");
+  }
+  return levels;
+}
+
+export function formatThinkingLevels(
+  provider?: string | null,
+  model?: string | null,
+  catalog?: ThinkingCatalogEntry[],
+): string {
+  return listThinkingLevels(provider, model, catalog).join(", ");
 }
 
 export function resolveThinkingDefaultForModel(params: {

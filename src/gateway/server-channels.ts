@@ -91,6 +91,13 @@ function resolveDefaultRuntime(channelId: ChannelId): ChannelAccountSnapshot {
   return plugin?.status?.defaultRuntime ?? { accountId: DEFAULT_ACCOUNT_ID };
 }
 
+function resolveChannelLogger(
+  channelLogs: Record<ChannelId, SubsystemLogger>,
+  channelId: ChannelId,
+): SubsystemLogger {
+  return channelLogs[channelId] ?? createSubsystemLogger(`channels/${channelId}`);
+}
+
 function cloneDefaultRuntime(channelId: ChannelId, accountId: string): ChannelAccountSnapshot {
   return { ...resolveDefaultRuntime(channelId), accountId };
 }

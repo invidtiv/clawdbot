@@ -107,6 +107,30 @@ export default defineConfig(() => {
     plugins: [
       controlUiServiceWorkerBuildIdPlugin(controlUiBuildId),
       {
+        name: "browser-node-compat",
+        enforce: "pre",
+        resolveId(source, importer) {
+          // src/version.ts uses Node's createRequire which is unavailable in
+          // browser builds. Redirect to a browser-safe stub.
+          if (importer && source.endsWith("/version.js") && !source.includes("node_modules")) {
+            const resolved = path.resolve(path.dirname(importer), source);
+            if (resolved === path.resolve(here, "../src/version.js")) {
+              return path.resolve(here, "src/version-browser-stub.ts");
+            }
+          }
+          // The shared slash-command registry only needs thinking option labels
+          // in the browser. Keep server-side plugin policy loading out of Vite's
+          // client bundle.
+          if (importer && source.endsWith("/thinking.js") && !source.includes("node_modules")) {
+            const resolved = path.resolve(path.dirname(importer), source);
+            if (resolved === path.resolve(here, "../src/auto-reply/thinking.js")) {
+              return path.resolve(here, "src/ui/thinking.ts");
+            }
+          }
+          return null;
+        },
+      },
+      {
         name: "control-ui-dev-stubs",
         configureServer(server) {
           server.middlewares.use("/__openclaw/control-ui-config.json", (_req, res) => {

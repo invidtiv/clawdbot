@@ -1,0 +1,25 @@
+{
+  "id": "knowledgeforge-rag",
+  "uiHints": {
+    "apiUrl": {
+      "label": "KnowledgeForge API URL",
+      "help": "Base URL for KnowledgeForge REST API (example: http://127.0.0.1:8742/api/v1)."
+    },
+    "endpoint": {
+      "label": "KnowledgeForge API URL (legacy key)",
+      "advanced": true
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiUrl": {
+        "type": "string"
+      },
+      "endpoint": {
+        "type": "string"
+      }
+    }
+  }
+}

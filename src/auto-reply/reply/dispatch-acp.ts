@@ -343,12 +343,44 @@ export async function tryDispatchAcpReply(params: {
 
   const { getAcpSessionManager } = await loadDispatchAcpManagerRuntime();
   const acpManager = getAcpSessionManager();
-  const acpResolution = acpManager.resolveSession({
+  let acpResolution = acpManager.resolveSession({
     cfg: params.cfg,
     sessionKey,
   });
   if (acpResolution.kind === "none") {
-    return null;
+    // Check if the agent has runtime.type === "acp" configured —
+    // if so, bootstrap an ACP session on the fly for DM-level dispatch.
+    const agentId = resolveAgentIdFromSessionKey(sessionKey);
+    const agentEntry = params.cfg.agents?.list?.find(
+      (entry) => entry.id?.trim().toLowerCase() === agentId.toLowerCase(),
+    );
+    if (agentEntry?.runtime?.type === "acp") {
+      const acpCfg = agentEntry.runtime.acp;
+      try {
+        logVerbose(
+          `dispatch-acp: auto-initializing ACP session for agent ${agentId} (backend=${acpCfg?.backend ?? "default"})`,
+        );
+        await acpManager.initializeSession({
+          cfg: params.cfg,
+          sessionKey,
+          agent: acpCfg?.agent ?? agentId,
+          mode: (acpCfg?.mode as "persistent" | "oneshot") ?? "persistent",
+          cwd: acpCfg?.cwd ?? resolveAgentWorkspaceDir(params.cfg, agentId) ?? undefined,
+          backendId: acpCfg?.backend,
+        });
+        acpResolution = acpManager.resolveSession({
+          cfg: params.cfg,
+          sessionKey,
+        });
+      } catch (initError) {
+        logVerbose(
+          `dispatch-acp: auto-init failed for ${agentId}: ${initError instanceof Error ? initError.message : String(initError)}`,
+        );
+      }
+    }
+    if (acpResolution.kind === "none") {
+      return null;
+    }
   }
   const canonicalSessionKey = acpResolution.sessionKey;
   const acpAgentId = resolveAgentIdFromSessionKey(canonicalSessionKey);

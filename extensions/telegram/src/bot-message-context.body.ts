@@ -131,6 +131,7 @@ async function resolveStickerVisionSupport(params: {
 
 export async function resolveTelegramInboundBody(params: {
   cfg: OpenClawConfig;
+  accountId: string;
   primaryCtx: TelegramContext;
   msg: TelegramContext["message"];
   allMedia: TelegramMediaRef[];
@@ -156,12 +157,12 @@ export async function resolveTelegramInboundBody(params: {
 }): Promise<TelegramInboundBodyResult | null> {
   const {
     cfg,
+    accountId,
     primaryCtx,
     msg,
     allMedia,
     isGroup,
     chatId,
-    accountId,
     senderId,
     senderUsername,
     sessionKey,
@@ -232,6 +233,32 @@ export async function resolveTelegramInboundBody(params: {
   }
   if (!rawBody && allMedia.length === 0) {
     return null;
+  }
+
+  // Check neverReply for group messages: store history context but don't process.
+  if (isGroup) {
+    const telegramCfg = cfg.channels?.telegram as
+      | { neverReply?: boolean; accounts?: Record<string, { neverReply?: boolean }> }
+      | undefined;
+    const accountCfg = telegramCfg?.accounts?.[accountId];
+    const shouldNeverReply = accountCfg?.neverReply ?? telegramCfg?.neverReply ?? false;
+    if (shouldNeverReply) {
+      logVerbose("Telegram group message stored for context (neverReply: true)");
+      recordPendingHistoryEntryIfEnabled({
+        historyMap: groupHistories,
+        historyKey: historyKey ?? "",
+        limit: historyLimit,
+        entry: historyKey
+          ? {
+              sender: buildSenderLabel(msg, senderId || chatId),
+              body: rawBody,
+              timestamp: msg.date ? msg.date * 1000 : undefined,
+              messageId: typeof msg.message_id === "number" ? String(msg.message_id) : undefined,
+            }
+          : null,
+      });
+      return null;
+    }
   }
 
   let bodyText = rawBody;

@@ -435,4 +435,74 @@ describe("config form renderer", () => {
     removeButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onPatch).toHaveBeenCalledWith(["accounts"], {});
   });
+
+  it("unwraps single-item allOf (superRefine pattern)", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        account: {
+          allOf: [
+            {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                enabled: { type: "boolean" },
+              },
+            },
+          ],
+        },
+      },
+    };
+    const analysis = analyzeConfigSchema(schema);
+    expect(analysis.unsupportedPaths).not.toContain("account");
+    expect(analysis.schema?.properties?.account?.properties?.name).toBeDefined();
+    expect(analysis.schema?.properties?.account?.properties?.enabled).toBeDefined();
+  });
+
+  it("strips allOf when schema has type and properties", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        config: {
+          type: "object",
+          properties: { enabled: { type: "boolean" } },
+          allOf: [{ properties: { name: { type: "string" } } }],
+        },
+      },
+    };
+    const analysis = analyzeConfigSchema(schema);
+    expect(analysis.unsupportedPaths).not.toContain("config");
+    expect(analysis.schema?.properties?.config?.properties?.enabled).toBeDefined();
+  });
+
+  it("merges multi-item allOf of object schemas", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        merged: {
+          allOf: [
+            { type: "object", properties: { a: { type: "string" } } },
+            { type: "object", properties: { b: { type: "number" } } },
+          ],
+        },
+      },
+    };
+    const analysis = analyzeConfigSchema(schema);
+    expect(analysis.unsupportedPaths).not.toContain("merged");
+    expect(analysis.schema?.properties?.merged?.properties?.a).toBeDefined();
+    expect(analysis.schema?.properties?.merged?.properties?.b).toBeDefined();
+  });
+
+  it("still flags unsupported complex allOf", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        complex: {
+          allOf: [{ type: "string" }, { type: "number" }],
+        },
+      },
+    };
+    const analysis = analyzeConfigSchema(schema);
+    expect(analysis.unsupportedPaths).toContain("complex");
+  });
 });

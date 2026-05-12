@@ -1,0 +1,18 @@
+{
+  "id": "geminitts",
+  "uiHints": {
+    "apiUrl": {
+      "label": "GeminiTTS API URL",
+      "help": "Base URL for GeminiTTS REST API (example: http://127.0.0.1:8751)."
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiUrl": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -448,6 +448,7 @@ export const buildTelegramMessageContext = async ({
   const originatingTo = buildTelegramInboundOriginTarget(chatId, threadSpec);
   const bodyResult = await resolveTelegramInboundBody({
     cfg,
+    accountId: account.accountId,
     primaryCtx,
     msg,
     allMedia,

@@ -1,0 +1,9 @@
+{
+  "name": "@openclaw/knowledgeforge-rag",
+  "version": "1.0.0",
+  "description": "KnowledgeForge RAG integration - semantic search across Obsidian vault, codebases, and agent discoveries",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}

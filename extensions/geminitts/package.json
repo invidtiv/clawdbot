@@ -1,0 +1,9 @@
+{
+  "name": "@openclaw/geminitts",
+  "version": "1.0.0",
+  "description": "GeminiTTS integration - Convert markdown to speech using Gemini 2.5 TTS",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}

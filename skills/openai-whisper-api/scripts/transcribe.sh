@@ -56,8 +56,29 @@ if [[ ! -f "$in" ]]; then
   exit 1
 fi
 
+config_openai_api_key=""
+config_path="${OPENCLAW_CONFIG_PATH:-$HOME/.openclaw/openclaw.json}"
+if [[ -f "$config_path" ]] && command -v python3 >/dev/null 2>&1; then
+  config_openai_api_key="$(python3 - "$config_path" <<'PY'
+import json, sys
+path = sys.argv[1]
+try:
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    key = (((data.get('skills') or {}).get('entries') or {}).get('openai-whisper-api') or {}).get('apiKey') or ''
+    print(key, end='')
+except Exception:
+    pass
+PY
+)"
+fi
+
+if [[ "$config_openai_api_key" != "" ]]; then
+  OPENAI_API_KEY="$config_openai_api_key"
+fi
+
 if [[ "${OPENAI_API_KEY:-}" == "" ]]; then
-  echo "Missing OPENAI_API_KEY" >&2
+  echo "Missing OPENAI_API_KEY (and no skills.entries.openai-whisper-api.apiKey found in OpenClaw config)" >&2
   exit 1
 fi
 

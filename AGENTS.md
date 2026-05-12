@@ -179,5 +179,58 @@ Skills own workflows; root owns hard policy and routing.
 - Rebrand/migration/config warnings: run `openclaw doctor`.
 - Never edit `node_modules`.
 - Local-only `.agents` ignores: `.git/info/exclude`, not repo `.gitignore`.
-- Provider tool schemas: prefer flat string enum helpers over `Type.Union([Type.Literal(...)])`; some providers reject `anyOf`.
-- External messaging: no token-delta channel messages. Follow `docs/concepts/streaming.md`.
+- CLI progress: `src/cli/progress.ts`; status tables: `src/terminal/table.ts`.
+- Connection/provider additions: update all UI surfaces + docs + status/config forms.
+- Provider tool schemas: prefer flat string enum helpers over `Type.Union([Type.Literal(...)])`; some providers reject `anyOf`. Not a repo-wide protocol/schema ban.
+- External messaging: no token-delta channel messages. Follow `docs/concepts/streaming.md`; preview/block streaming uses edits/chunks and preserves final/fallback delivery.
+
+## Collaboration / Safety Notes
+
+- When working on a GitHub Issue or PR, print the full URL at the end of the task.
+- When answering questions, respond with high-confidence answers only: verify in code; do not guess.
+- Carbon version edits are owner-only: do not change `@buape/carbon` version pins unless you are Shadow (@thewilloftheshadow) as verified by gh.
+- Any dependency with `pnpm.patchedDependencies` must use an exact version (no `^`/`~`).
+- Patching dependencies (pnpm patches, overrides, or vendored changes) requires explicit approval; do not do this by default.
+- **Multi-agent safety:** do **not** create/apply/drop `git stash` entries unless explicitly requested (this includes `git pull --rebase --autostash`). Assume other agents may be working; keep unrelated WIP untouched and avoid cross-cutting state changes.
+- **Multi-agent safety:** when the user says "push", you may `git pull --rebase` to integrate latest changes (never discard other agents' work). When the user says "commit", scope to your changes only. When the user says "commit all", commit everything in grouped chunks.
+- **Multi-agent safety:** prefer grouped `commit` / `pull --rebase` / `push` cycles for related work instead of many tiny syncs.
+- **Multi-agent safety:** do **not** create/remove/modify `git worktree` checkouts (or edit `.worktrees/*`) unless explicitly requested.
+- **Multi-agent safety:** do **not** switch branches / check out a different branch unless explicitly requested.
+- **Multi-agent safety:** running multiple agents is OK as long as each agent has its own session.
+- **Multi-agent safety:** when you see unrecognized files, keep going; focus on your changes and commit only those.
+- Lint/format churn:
+  - If staged+unstaged diffs are formatting-only, auto-resolve without asking.
+  - If commit/push already requested, auto-stage and include formatting-only follow-ups in the same commit (or a tiny follow-up commit if needed), no extra confirmation.
+  - Only ask when changes are semantic (logic/data/behavior).
+- **Multi-agent safety:** focus reports on your edits; avoid guard-rail disclaimers unless truly blocked; when multiple agents touch the same file, continue if safe; end with a brief “other files present” note only if relevant.
+- Bug investigations: read source code of relevant npm dependencies and all related local code before concluding; aim for high-confidence root cause.
+- Code style: add brief comments for tricky logic; keep files under ~700 LOC when feasible (split/refactor as needed).
+- Tool schema guardrails (google-antigravity): avoid `Type.Union` in tool input schemas; no `anyOf`/`oneOf`/`allOf`. Use `stringEnum`/`optionalStringEnum` (Type.Unsafe enum) for string lists, and `Type.Optional(...)` instead of `... | null`. Keep top-level tool schema as `type: "object"` with `properties`.
+- Tool schema guardrails: avoid raw `format` property names in tool schemas; some validators treat `format` as a reserved keyword and reject the schema.
+- Never send streaming/partial replies to external messaging surfaces (WhatsApp, Telegram); only final replies should be delivered there. Streaming/tool events may still go to internal UIs/control channel.
+- For manual `openclaw message send` messages that include `!`, use the heredoc pattern noted below to avoid the Bash tool’s escaping.
+- Release guardrails: do not change version numbers without operator’s explicit consent; always ask permission before running any npm publish/release step.
+- Beta release guardrail: when using a beta Git tag (for example `vYYYY.M.D-beta.N`), publish npm with a matching beta version suffix (for example `YYYY.M.D-beta.N`) rather than a plain version on `--tag beta`; otherwise the plain version name gets consumed/blocked.
+
+## Kanban Workflow (MANDATORY)
+
+All work MUST be tracked on the Veritas Kanban board.
+
+### Before Starting
+
+1. Create a task on the Kanban board
+2. Move to "in-progress" status
+3. Start time tracking
+
+### During Work
+
+- Add progress comments
+- Update task description as needed
+
+### After Commit/Push
+
+1. Stop time tracking
+2. Add final comment with commit hash
+3. Mark task as "done"
+
+See AGENTS.md for detailed API instructions.

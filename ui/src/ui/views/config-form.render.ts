@@ -328,6 +328,47 @@ function getSectionIcon(key: string) {
   return sectionIcons[key as keyof typeof sectionIcons] ?? sectionIcons.default;
 }
 
+function normalizeTags(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  for (const value of raw) {
+    if (typeof value !== "string") {
+      continue;
+    }
+    const tag = value.trim().toLowerCase();
+    if (!tag || seen.has(tag)) {
+      continue;
+    }
+    seen.add(tag);
+    tags.push(tag);
+  }
+  return tags;
+}
+
+function matchesRequiredTags(required: string[], available: string[]): boolean {
+  if (required.length === 0) {
+    return true;
+  }
+  const tagSet = new Set(available);
+  return required.every((tag) => tagSet.has(tag));
+}
+
+function resolveDirectSearchTags(
+  key: string,
+  schema: JsonSchema,
+  uiHints: ConfigUiHints,
+): string[] {
+  const hint = hintForPath([key], uiHints);
+  return [
+    ...normalizeTags(hint?.tags),
+    ...normalizeTags(schema["x-tags"]),
+    ...normalizeTags(schema.tags),
+  ];
+}
+
 function matchesSearch(params: {
   key: string;
   schema: JsonSchema;

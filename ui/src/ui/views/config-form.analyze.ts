@@ -40,6 +40,12 @@ function normalizeSchemaNode(
   const pathLabel = pathKey(path) || "<root>";
 
   if (schema.anyOf || schema.oneOf || schema.allOf) {
+    // If the schema has allOf alongside type+properties, the allOf is just
+    // refinement metadata (e.g. Zod .superRefine). Strip it and process normally.
+    if (schema.allOf && (schema.type || schema.properties)) {
+      const { allOf: _, ...rest } = schema;
+      return normalizeSchemaNode(rest as JsonSchema, path);
+    }
     const union = normalizeUnion(schema, path);
     if (union) {
       return union;
@@ -176,6 +182,27 @@ function normalizeUnion(
   path: Array<string | number>,
 ): ConfigSchemaAnalysis | null {
   if (schema.allOf) {
+    const entries = schema.allOf.filter((entry) => entry && typeof entry === "object");
+    if (entries.length === 0) {
+      return null;
+    }
+    // Single-item allOf (common from Zod .superRefine): unwrap
+    if (entries.length === 1) {
+      return normalizeSchemaNode(entries[0], path);
+    }
+    // Multi-item allOf where all entries are objects: merge properties
+    const objectEntries = entries.filter(
+      (entry) => schemaType(entry) === "object" || entry.properties,
+    );
+    if (objectEntries.length === entries.length) {
+      const mergedProps: Record<string, JsonSchema> = {};
+      for (const entry of objectEntries) {
+        if (entry.properties) {
+          Object.assign(mergedProps, entry.properties);
+        }
+      }
+      return normalizeSchemaNode({ type: "object", properties: mergedProps }, path);
+    }
     return null;
   }
   const union = schema.anyOf ?? schema.oneOf;

@@ -5,6 +5,8 @@ services:
     env_file:
       - path: .env
         required: false
+      - path: .env.prod
+        required: false
     environment:
       HOME: /home/node
       OPENCLAW_HOME: /home/node
@@ -34,14 +36,42 @@ services:
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-}
       OTEL_SEMCONV_STABILITY_OPT_IN: ${OTEL_SEMCONV_STABILITY_OPT_IN:-}
       OPENCLAW_OTEL_PRELOADED: ${OPENCLAW_OTEL_PRELOADED:-}
+      KNOWLEDGEFORGE_API_URL: ${KNOWLEDGEFORGE_API_URL:-http://host.docker.internal:8742/api/v1}
+      ADB_SERVER_SOCKET: ${ADB_SERVER_SOCKET:-tcp:100.122.125.15:5037}
+      ANDROID_SERIAL: ${ANDROID_SERIAL:-emulator-5570}
       CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       TZ: ${OPENCLAW_TZ:-UTC}
     volumes:
       - ${OPENCLAW_CONFIG_DIR:-${HOME:-/tmp}/.openclaw}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR:-${HOME:-/tmp}/.openclaw/workspace}:/home/node/.openclaw/workspace
       - ${OPENCLAW_AUTH_PROFILE_SECRET_DIR:-${HOME:-/tmp}/.openclaw-auth-profile-secrets}:/home/node/.config/openclaw
+      - /home/bsdev/Obsidian/config/vaults/bsdev:/home/node/obsidian-vault
+      - /home/bsdev/Bsclawdbot/extensions/knowledgeforge-rag:/app/extensions/knowledgeforge-rag:ro
+      - /home/bsdev/openclaw-claude:/home/node/.claude
+      - ${OPENCLAW_WORKSPACE_DIR}/extensions/telegram-mtproto:/app/extensions/telegram-mtproto
+      - /home/bsdev/Android/Sdk/platform-tools/adb:/usr/local/bin/adb:ro
+      - /home/bsdev/BS/bsdeals:/home/node/.openclaw/workspace/projects/bsdeals
+      - /home/bsdev/BS/bs_alert_bot:/home/node/.openclaw/workspace/projects/bs_alert_bot
+      - /home/bsdev/BS/AndroidSynchApp:/home/node/.openclaw/workspace/projects/AndroidSynchApp
+      - /home/bsdev/BS/bsemulatorcontroler:/home/node/.openclaw/workspace/projects/bsemulatorcontroler
+      - /home/bsdev/BS/bsgangmoves:/home/node/.openclaw/workspace/projects/bsgangmoves
+      - /home/bsdev/BS/bsgangranking:/home/node/.openclaw/workspace/projects/bsgangranking
+      - /home/bsdev/BS/Bshome:/home/node/.openclaw/workspace/projects/Bshome
+      - /home/bsdev/BS/BShotline:/home/node/.openclaw/workspace/projects/BShotline
+      - /home/bsdev/BS/bskillcount:/home/node/.openclaw/workspace/projects/bskillcount
+      - /home/bsdev/BS/bslauncher:/home/node/.openclaw/workspace/projects/bslauncher
+      - /home/bsdev/BS/bssentrylistenner:/home/node/.openclaw/workspace/projects/bssentrylistenner
+      - /home/bsdev/BS/bstimer:/home/node/.openclaw/workspace/projects/bstimer
+      - /home/bsdev/BS/bsviewer:/home/node/.openclaw/workspace/projects/bsviewer
+      - /home/bsdev/BS/bsvmadminbot:/home/node/.openclaw/workspace/projects/bsvmadminbot
+      - /home/bsdev/Markdown-viewer:/home/node/.openclaw/workspace/projects/Markdown-viewer
+      - /home/bsdev/pchelper:/home/node/.openclaw/workspace/projects/pchelper
+      - /home/bsdev/BS/Remote-Sync:/home/node/.openclaw/workspace/projects/Remote-Sync
+      - /home/bsdev/BS/SentryOG:/home/node/.openclaw/workspace/projects/SentryOG
+      - /home/bsdev/tailscaledash:/home/node/.openclaw/workspace/projects/tailscaledash
       ## Uncomment the lines below to enable sandbox isolation
       ## (agents.defaults.sandbox). Requires Docker CLI in the image
       ## (build with --build-arg OPENCLAW_INSTALL_DOCKER_CLI=1) or use
@@ -61,19 +91,23 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "${OPENCLAW_GATEWAY_PORT:-18789}:18789"
-      - "${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"
+      - "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"
     init: true
     restart: unless-stopped
+    networks:
+      - default
     command:
       [
         "node",
-        "dist/index.js",
+        "--disable-warning=ExperimentalWarning",
+        "openclaw.mjs",
         "gateway",
         "--bind",
         "${OPENCLAW_GATEWAY_BIND:-lan}",
         "--port",
         "18789",
+        "--allow-unconfigured",
       ]
     healthcheck:
       test:
@@ -94,6 +128,8 @@ services:
     env_file:
       - path: .env
         required: false
+      - path: .env.prod
+        required: false
     cap_drop:
       - NET_RAW
       - NET_ADMIN
@@ -111,6 +147,9 @@ services:
       OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
       OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: ${OPENCLAW_ALLOW_INSECURE_PRIVATE_WS:-}
+      KNOWLEDGEFORGE_API_URL: ${KNOWLEDGEFORGE_API_URL:-http://host.docker.internal:8742/api/v1}
+      ADB_SERVER_SOCKET: ${ADB_SERVER_SOCKET:-tcp:100.122.125.15:5037}
+      ANDROID_SERIAL: ${ANDROID_SERIAL:-emulator-5570}
       BROWSER: echo
       CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
@@ -120,6 +159,30 @@ services:
       - ${OPENCLAW_CONFIG_DIR:-${HOME:-/tmp}/.openclaw}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR:-${HOME:-/tmp}/.openclaw/workspace}:/home/node/.openclaw/workspace
       - ${OPENCLAW_AUTH_PROFILE_SECRET_DIR:-${HOME:-/tmp}/.openclaw-auth-profile-secrets}:/home/node/.config/openclaw
+      - /home/bsdev/Obsidian/config/vaults/bsdev:/home/node/obsidian-vault
+      - /home/bsdev/Bsclawdbot/extensions/knowledgeforge-rag:/app/extensions/knowledgeforge-rag:ro
+      - /home/bsdev/openclaw-claude:/home/node/.claude
+      - ${OPENCLAW_WORKSPACE_DIR}/extensions/telegram-mtproto:/app/extensions/telegram-mtproto
+      - /home/bsdev/Android/Sdk/platform-tools/adb:/usr/local/bin/adb:ro
+      - /home/bsdev/BS/bsdeals:/home/node/.openclaw/workspace/projects/bsdeals
+      - /home/bsdev/BS/bs_alert_bot:/home/node/.openclaw/workspace/projects/bs_alert_bot
+      - /home/bsdev/BS/AndroidSynchApp:/home/node/.openclaw/workspace/projects/AndroidSynchApp
+      - /home/bsdev/BS/bsemulatorcontroler:/home/node/.openclaw/workspace/projects/bsemulatorcontroler
+      - /home/bsdev/BS/bsgangmoves:/home/node/.openclaw/workspace/projects/bsgangmoves
+      - /home/bsdev/BS/bsgangranking:/home/node/.openclaw/workspace/projects/bsgangranking
+      - /home/bsdev/BS/Bshome:/home/node/.openclaw/workspace/projects/Bshome
+      - /home/bsdev/BS/BShotline:/home/node/.openclaw/workspace/projects/BShotline
+      - /home/bsdev/BS/bskillcount:/home/node/.openclaw/workspace/projects/bskillcount
+      - /home/bsdev/BS/bslauncher:/home/node/.openclaw/workspace/projects/bslauncher
+      - /home/bsdev/BS/bssentrylistenner:/home/node/.openclaw/workspace/projects/bssentrylistenner
+      - /home/bsdev/BS/bstimer:/home/node/.openclaw/workspace/projects/bstimer
+      - /home/bsdev/BS/bsviewer:/home/node/.openclaw/workspace/projects/bsviewer
+      - /home/bsdev/BS/bsvmadminbot:/home/node/.openclaw/workspace/projects/bsvmadminbot
+      - /home/bsdev/Markdown-viewer:/home/node/.openclaw/workspace/projects/Markdown-viewer
+      - /home/bsdev/pchelper:/home/node/.openclaw/workspace/projects/pchelper
+      - /home/bsdev/BS/Remote-Sync:/home/node/.openclaw/workspace/projects/Remote-Sync
+      - /home/bsdev/BS/SentryOG:/home/node/.openclaw/workspace/projects/SentryOG
+      - /home/bsdev/tailscaledash:/home/node/.openclaw/workspace/projects/tailscaledash
     stdin_open: true
     tty: true
     init: true

@@ -1,0 +1,113 @@
+{
+  "id": "acp-claude-code",
+  "name": "ACP Claude Code Runtime",
+  "description": "ACP runtime backend that uses the Claude Code CLI (claude) for agent sessions with streaming JSON I/O.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "command": {
+        "type": "string",
+        "minLength": 1
+      },
+      "model": {
+        "type": "string",
+        "minLength": 1
+      },
+      "permissionMode": {
+        "type": "string",
+        "enum": ["default", "plan", "auto", "approved", "bypass"]
+      },
+      "defaultCwd": {
+        "type": "string",
+        "minLength": 1
+      },
+      "maxTurns": {
+        "type": "number",
+        "minimum": 1
+      },
+      "maxBudgetUsd": {
+        "type": "number",
+        "minimum": 0.01
+      },
+      "timeoutSeconds": {
+        "type": "number",
+        "minimum": 1
+      },
+      "systemPrompt": {
+        "type": "string"
+      },
+      "appendSystemPrompt": {
+        "type": "string"
+      },
+      "allowedTools": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "disallowedTools": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "mcpConfig": {
+        "type": "string",
+        "description": "Path to MCP config JSON file to inject into Claude Code sessions"
+      }
+    }
+  },
+  "uiHints": {
+    "command": {
+      "label": "Claude Code Command",
+      "help": "Path or command name for the Claude Code CLI binary (default: 'claude')."
+    },
+    "model": {
+      "label": "Default Model",
+      "help": "Model to use for Claude Code sessions (e.g. claude-sonnet-4-6, claude-opus-4-6)."
+    },
+    "permissionMode": {
+      "label": "Permission Mode",
+      "help": "Claude Code permission mode for tool execution: default, plan, auto, approved, or bypass."
+    },
+    "defaultCwd": {
+      "label": "Default Working Directory",
+      "help": "Default working directory for Claude Code sessions when not set per session."
+    },
+    "maxTurns": {
+      "label": "Max Agentic Turns",
+      "help": "Maximum number of agentic turns per non-interactive invocation."
+    },
+    "maxBudgetUsd": {
+      "label": "Max Budget (USD)",
+      "help": "Maximum dollar spend per session invocation.",
+      "advanced": true
+    },
+    "timeoutSeconds": {
+      "label": "Timeout (seconds)",
+      "help": "Per-turn timeout in seconds.",
+      "advanced": true
+    },
+    "systemPrompt": {
+      "label": "System Prompt Override",
+      "help": "Replace the default Claude Code system prompt.",
+      "advanced": true
+    },
+    "appendSystemPrompt": {
+      "label": "Append System Prompt",
+      "help": "Append additional instructions to the default system prompt."
+    },
+    "allowedTools": {
+      "label": "Allowed Tools",
+      "help": "Restrict Claude Code to these tools only (e.g. [\"Bash\", \"Read\", \"Edit\"]).",
+      "advanced": true
+    },
+    "disallowedTools": {
+      "label": "Disallowed Tools",
+      "help": "Block specific tools from Claude Code sessions.",
+      "advanced": true
+    },
+    "mcpConfig": {
+      "label": "MCP Config Path",
+      "help": "Path to a JSON file defining MCP servers to inject into Claude Code sessions.",
+      "advanced": true
+    }
+  }
+}

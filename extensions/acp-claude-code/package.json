@@ -1,0 +1,9 @@
+{
+  "name": "@openclaw/acp-claude-code",
+  "version": "0.1.0",
+  "description": "OpenClaw ACP runtime backend powered by Claude Code CLI",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}
